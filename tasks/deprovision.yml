@@ -24,9 +24,3 @@
     - nodes is defined
     - hostvars[inventory_hostname].openstack.name is defined
     - item.name == hostvars[inventory_hostname].openstack.name
-
-
-
-
-
-

@@ -38,7 +38,7 @@
   with_items: "{{ nodes }}"
   when: nodes is defined
 
-- name: wait for instance creation to complete
+- name: waiting for instance creation to complete
   async_status: jid="{{ item.ansible_job_id }}"
   register: instances
   until: instances.finished

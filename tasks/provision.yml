@@ -57,8 +57,19 @@
     - nodes is defined
     - item.openstack is defined
 
-
-
-
-
-
+- name: waiting for systems to be available for connection
+  wait_for_connection:
+  vars:
+    ansible_port: 5986
+    ansible_connection: winrm
+    ansible_winrm_transport: credssp
+    ansible_winrm_server_cert_validation: ignore
+  delegate_to: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"
+  with_items: "{{ instances.results }}"
+  ignore_errors: yes
+  when:
+    - instances.results is defined
+    - nodes is defined
+    - item.openstack is defined
+    - ansible_port is defined
+    - ansible_port == 5986

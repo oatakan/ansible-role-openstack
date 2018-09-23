@@ -30,7 +30,7 @@
       hostname: "{{ item.name }}"
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
-    auto_ip: yes
+    auto_ip: "{{ item.auto_ip | default ('yes') }}"
     wait: yes
   async: 7200
   poll: 0

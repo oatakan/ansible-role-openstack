@@ -72,8 +72,8 @@
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
   loop:
-    - "{{ deploy_linux.results | default([]) }}"
-    - "{{ deploy_windows.results | default([]) }}"
+    - "{{ deploy_linux.results | default('') }}"
+    - "{{ deploy_windows.results | default('') }}"
   when:
     - nodes is defined
     - item.ansible_job_id is defined

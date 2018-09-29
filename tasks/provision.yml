@@ -77,6 +77,7 @@
   when:
     - nodes is defined
     - item is defined
+    - item.ansible_job_id is defined
 
 - debug:
     var: item

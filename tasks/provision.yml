@@ -68,6 +68,9 @@
     - item.os_type is defined
     - item.os_type | lower == 'windows'
 
+- debug:
+    msg: "{{ deploy_linux.results + deploy_windows.results }}"
+
 - name: combine deployment results
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"

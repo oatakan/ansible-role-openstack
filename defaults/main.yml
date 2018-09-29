@@ -9,6 +9,4 @@ instance_wait_connection_timeout: 300
 
 pause_in_seconds: 60
 
-user_data:
-  linux: ''
-  windows: "{{ lookup('template', 'templates/userdata.txt.j2') }}"
+deploy_async: no

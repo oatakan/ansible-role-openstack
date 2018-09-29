@@ -1,0 +1,57 @@
+---
+
+- name: linux - launch a compute instance
+  os_server:
+    state: present
+    #auth:
+    #  auth_url: "{{ clouds.devstack.auth.auth_url | default(lookup('env', 'OS_AUTH_URL')) }}"
+    #  username: "{{ clouds.devstack.auth.username | default(lookup('env', 'OS_USERNAME')) }}"
+    #  password: "{{ clouds.devstack.auth.password | default(lookup('env', 'OS_PASSWORD')) }}"
+    #  project_name: "{{ clouds.devstack.auth.project_name | default(lookup('env', 'OS_PROJECT_NAME')) }}"
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    key_name: "{{ item.key_name }}"
+    timeout: 300
+    flavor: "{{ item.flavor }}"
+    nics: "{{ item.nics }}"
+    boot_from_volume: yes
+    terminate_volume: yes
+    volume_size: "{{ item.volume_size }}"
+    userdata: "{{ item.user_data | default('') }}"
+    meta:
+      hostname: "{{ item.name }}"
+      role: "{{ item.role }}"
+      app_name: "{{ item.app_name }}"
+    auto_ip: "{{ item.auto_ip | default ('yes') }}"
+    wait: yes
+  register: deploy_linux
+  loop: "{{ nodes }}"
+  when:
+    - nodes is defined
+    - item.os_type is not defined or (item.os_type is defined and item.os_type | lower == 'linux')
+
+- name: windows - launch a compute instance
+  os_server:
+    state: present
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    key_name: "{{ item.key_name }}"
+    timeout: 300
+    flavor: "{{ item.flavor }}"
+    nics: "{{ item.nics }}"
+    boot_from_volume: yes
+    terminate_volume: yes
+    volume_size: "{{ item.volume_size }}"
+    userdata: "{{ item.user_data | default(lookup('template', 'templates/userdata.txt.j2')) }}"
+    meta:
+      hostname: "{{ item.name }}"
+      role: "{{ item.role }}"
+      app_name: "{{ item.app_name }}"
+    auto_ip: "{{ item.auto_ip | default ('yes') }}"
+    wait: yes
+  register: deploy_windows
+  loop: "{{ nodes }}"
+  when:
+    - nodes is defined
+    - item.os_type is defined
+    - item.os_type | lower == 'windows'

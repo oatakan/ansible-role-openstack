@@ -63,3 +63,6 @@
   no_log: yes
   when:
     - nodes is defined
+
+- debug:
+    var: instances.results

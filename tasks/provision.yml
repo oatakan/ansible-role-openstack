@@ -75,7 +75,6 @@
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
   loop:
-    - "{{ deploy_linux.results | default('') }}"
     - "{{ deploy_windows.results | default('') }}"
   when:
     - nodes is defined

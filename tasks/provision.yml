@@ -68,22 +68,19 @@
     - item.os_type is defined
     - item.os_type | lower == 'windows'
 
-- debug:
-    msg: "{{ deploy_linux.results + deploy_windows.results }}"
-
 - name: combine deployment results
   set_fact:
-    deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
-  loop:
-    - "{{ deploy_linux.results | default([]) }}"
-    - "{{ deploy_windows.results | default([]) }}"
+    deploy_results: "{{ deploy_linux.results + deploy_windows.results }}"
   when:
     - nodes is defined
-    - item is defined
 
 - debug:
     var: item
   loop: "{{ deploy_results }}"
+  when:
+    - nodes is defined
+    - deploy_results is defined
+    - item.ansible_job_id is defined
 
 - name: waiting for instance creation to complete
   async_status:
@@ -96,7 +93,6 @@
   when:
     - nodes is defined
     - deploy_results is defined
-    - item is defined
     - item.ansible_job_id is defined
 
 - name: waiting for servers to come online

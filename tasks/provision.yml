@@ -8,7 +8,7 @@
   include_vars: "{{ config_file }}"
   when: st.stat.exists and st.stat.isreg
 
-- name: launch a compute instance
+- name: linux - launch a compute instance
   os_server:
     state: present
     #auth:
@@ -16,6 +16,33 @@
     #  username: "{{ clouds.devstack.auth.username | default(lookup('env', 'OS_USERNAME')) }}"
     #  password: "{{ clouds.devstack.auth.password | default(lookup('env', 'OS_PASSWORD')) }}"
     #  project_name: "{{ clouds.devstack.auth.project_name | default(lookup('env', 'OS_PROJECT_NAME')) }}"
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    key_name: "{{ item.key_name }}"
+    timeout: 300
+    flavor: "{{ item.flavor }}"
+    nics: "{{ item.nics }}"
+    boot_from_volume: yes
+    terminate_volume: yes
+    volume_size: "{{ item.volume_size }}"
+    userdata: "{{ item.user_data | default('') }}"
+    meta:
+      hostname: "{{ item.name }}"
+      role: "{{ item.role }}"
+      app_name: "{{ item.app_name }}"
+    auto_ip: "{{ item.auto_ip | default ('yes') }}"
+    wait: yes
+  async: 7200
+  poll: 0
+  register: deploy_linux
+  loop: "{{ nodes }}"
+  when:
+    - nodes is defined
+    - item.os_type is not defined or (item.os_type is defined and item.os_type | lower == 'linux')
+
+- name: windows - launch a compute instance
+  os_server:
+    state: present
     name: "{{ item.name }}"
     image: "{{ item.image }}"
     key_name: "{{ item.key_name }}"
@@ -34,9 +61,22 @@
     wait: yes
   async: 7200
   poll: 0
-  register: deploy
-  with_items: "{{ nodes }}"
-  when: nodes is defined
+  register: deploy_windows
+  loop: "{{ nodes }}"
+  when:
+    - nodes is defined
+    - item.os_type is defined
+    - item.os_type | lower == 'windows'
+
+- name: combine deployment results
+  set_fact:
+    deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
+  loop:
+    - "{{ deploy_linux.results }}"
+    - "{{ deploy_windows.results }}"
+  when:
+    - nodes is defined
+    - item.ansible_job_id is defined
 
 - name: waiting for instance creation to complete
   async_status: jid="{{ item.ansible_job_id }}"
@@ -44,14 +84,18 @@
   until: instances.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
-  with_items: "{{ deploy.results }}"
+  loop: "{{ deploy.results }}"
+  when:
+    - nodes is defined
+    - deploy_results is defined
+    - item.ansible_job_id is defined
 
 - name: waiting for servers to come online
   wait_for:
     host: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"
     port: "{{ ansible_port }}"
     timeout: "{{ instance_wait_connection_timeout }}"
-  with_items: "{{ instances.results }}"
+  loop: "{{ instances.results }}"
   when:
     - instances.results is defined
     - nodes is defined
@@ -65,7 +109,7 @@
     ansible_winrm_transport: credssp
     ansible_winrm_server_cert_validation: ignore
   delegate_to: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"
-  with_items: "{{ instances.results }}"
+  loop: "{{ instances.results }}"
   ignore_errors: yes
   when:
     - instances.results is defined

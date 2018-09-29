@@ -19,7 +19,7 @@
     #  project_name: "{{ clouds.devstack.auth.project_name | default(lookup('env', 'OS_PROJECT_NAME')) }}"
     name: "{{ hostvars[inventory_hostname].openstack.name }}"
   delegate_to: localhost
-  with_items: "{{ nodes }}"
+  loop: "{{ nodes }}"
   when:
     - nodes is defined
     - hostvars[inventory_hostname].openstack.name is defined

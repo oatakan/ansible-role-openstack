@@ -68,12 +68,6 @@
     - item.os_type is defined
     - item.os_type | lower == 'windows'
 
-- debug:
-    var: item
-  loop: "{{ deploy_windows.results }}"
-
-- pause:
-
 - name: combine deployment results
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
@@ -83,7 +77,10 @@
   when:
     - nodes is defined
     - item is defined
-    - item.ansible_job_id is defined
+
+- debug:
+    var: item
+  loop: "{{ deploy_results }}"
 
 - name: waiting for instance creation to complete
   async_status:

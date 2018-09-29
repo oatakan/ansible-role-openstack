@@ -68,6 +68,3 @@
 - name: set instances results
   set_fact:
     instances: "{{ {'results': deploy_results } }}"
-
-- debug:
-    var: instances.results

@@ -75,21 +75,25 @@
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
   loop:
+    - "{{ deploy_linux.results | default('') }}"
     - "{{ deploy_windows.results | default('') }}"
   when:
     - nodes is defined
     - item is defined
+    - item.ansible_job_id is defined
 
 - name: waiting for instance creation to complete
-  async_status: jid="{{ item.ansible_job_id }}"
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
   register: instances
   until: instances.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
-  loop: "{{ deploy.results }}"
+  loop: "{{ deploy_results }}"
   when:
     - nodes is defined
     - deploy_results is defined
+    - item is defined
     - item.ansible_job_id is defined
 
 - name: waiting for servers to come online

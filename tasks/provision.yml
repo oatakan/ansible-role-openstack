@@ -70,12 +70,7 @@
 
 - debug:
     var: item
-  loop:
-    - "{{ deploy_linux.results }}"
-    - "{{ deploy_windows.results }}"
-  when:
-    - nodes is defined
-    - item is defined
+  loop: "{{ deploy_windows.results }}"
 
 - pause:
 

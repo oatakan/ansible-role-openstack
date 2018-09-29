@@ -14,27 +14,6 @@
 - include_tasks: provision_sync.yml
   when: not deploy_async
 
-- name: combine deployment results
-  set_fact:
-    deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
-  loop: "{{ deploy_linux.results + deploy_windows.results }}"
-  no_log: yes
-  when:
-    - nodes is defined
-    - item.ansible_job_id is defined
-
-- name: waiting for instance creation to complete
-  async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: instances
-  until: instances.finished
-  retries: "{{ instance_wait_retry_limit }}"
-  delay: 10
-  loop: "{{ deploy_results }}"
-  when:
-    - nodes is defined
-    - deploy_results is defined
-
 - name: waiting for servers to come online
   wait_for:
     host: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"

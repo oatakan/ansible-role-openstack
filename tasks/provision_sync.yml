@@ -55,3 +55,12 @@
     - nodes is defined
     - item.os_type is defined
     - item.os_type | lower == 'windows'
+
+- name: combine deployment results
+  set_fact:
+    instances: "{{ deploy_results|default([]) + [ item ] }}"
+  loop: "{{ deploy_linux.results + deploy_windows.results }}"
+  no_log: yes
+  when:
+    - nodes is defined
+    - item.ansible_job_id is defined

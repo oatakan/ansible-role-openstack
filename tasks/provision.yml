@@ -71,17 +71,10 @@
 - name: combine deployment results
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
-  with_items: "{{ deploy_linux.results + deploy_windows.results }}"
+  loop: "{{ deploy_linux.results + deploy_windows.results }}"
   when:
     - nodes is defined
     - item.ansible_job_id is defined
-
-- debug:
-    var: item
-  loop: "{{ deploy_results }}"
-  when:
-    - nodes is defined
-    - deploy_results is defined
 
 - name: waiting for instance creation to complete
   async_status:

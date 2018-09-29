@@ -68,6 +68,9 @@
     - item.os_type is defined
     - item.os_type | lower == 'windows'
 
+- debug:
+    var: deploy_windows[0].ansible_job_id
+
 - name: combine deployment results
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"

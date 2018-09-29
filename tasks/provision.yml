@@ -69,7 +69,16 @@
     - item.os_type | lower == 'windows'
 
 - debug:
-    var: deploy_windows.results[0].ansible_job_id
+    var: item.ansible_job_id
+  loop:
+    - "{{ deploy_linux.results }}"
+    - "{{ deploy_windows.results }}"
+  when:
+    - nodes is defined
+    - item is defined
+    - item.ansible_job_id is defined
+
+- pause:
 
 - name: combine deployment results
   set_fact:
@@ -89,7 +98,7 @@
   until: instances.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
-  with_items: "{{ deploy_results }}"
+  loop: "{{ deploy_results }}"
   when:
     - nodes is defined
     - deploy_results is defined

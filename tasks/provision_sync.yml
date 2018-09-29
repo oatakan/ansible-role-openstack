@@ -63,7 +63,7 @@
   no_log: yes
   when:
     - nodes is defined
-    - (item skipped is not defined) or not item.skipped
+    - (item.skipped is not defined) or not item.skipped
 
 - name: set instances results
   set_fact:

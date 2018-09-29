@@ -69,7 +69,7 @@
     - item.os_type | lower == 'windows'
 
 - debug:
-    var: item.ansible_job_id
+    var: item
   loop:
     - "{{ deploy_linux.results }}"
     - "{{ deploy_windows.results }}"

@@ -1,4 +1,3 @@
-{% if item.os_type is defined and item.os_type == 'windows' %}
 <powershell>
 $admin = [adsi]("WinNT://./administrator, user")
 {% if ansible_password is defined %}
@@ -10,7 +9,4 @@ $admin.PSBase.Invoke("SetPassword", "{{ ansible_ssh_password }}")
 Enable-WSManCredSSP -Role Server -Force
 Set-Item -Path "WSMan:\localhost\Service\Auth\CredSSP" -Value $true
 Resize-Partition -DriveLetter c -Size  (Get-PartitionSupportedSize -DriveLetter c).sizeMax -ErrorAction SilentlyContinue
-Rename-Computer -NewName {{ item.name }}
-Restart-Computer
 </powershell>
-{% endif %}

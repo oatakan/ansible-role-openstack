@@ -69,7 +69,7 @@
     - item.os_type | lower == 'windows'
 
 - debug:
-    var: deploy_windows[0].ansible_job_id
+    var: deploy_windows.results[0].ansible_job_id
 
 - name: combine deployment results
   set_fact:

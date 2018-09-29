@@ -63,4 +63,3 @@
   no_log: yes
   when:
     - nodes is defined
-    - item.ansible_job_id is defined

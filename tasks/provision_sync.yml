@@ -58,7 +58,7 @@
 
 - name: combine deployment results
   set_fact:
-    instances: "{{ deploy_results|default([]) + [ item ] }}"
+    instances: "{{ instances|default([]) + [ item ] }}"
   loop: "{{ deploy_linux.results + deploy_windows.results }}"
   no_log: yes
   when:

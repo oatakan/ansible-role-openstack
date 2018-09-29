@@ -71,8 +71,8 @@
 - debug:
     var: item.ansible_job_id
   loop:
-    - "{{ deploy_linux.results | default(omit) }}"
-    - "{{ deploy_windows.results | default(omit) }}"
+    - "{{ deploy_linux.results }}"
+    - "{{ deploy_windows.results }}"
   when:
     - nodes is defined
     - item is defined
@@ -83,8 +83,8 @@
   set_fact:
     deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
   loop:
-    - "{{ deploy_linux.results | default('') }}"
-    - "{{ deploy_windows.results | default('') }}"
+    - "{{ deploy_linux.results | default(omit) }}"
+    - "{{ deploy_windows.results | default(omit) }}"
   when:
     - nodes is defined
     - item is defined

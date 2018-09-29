@@ -78,7 +78,7 @@
     - "{{ deploy_windows.results | default('') }}"
   when:
     - nodes is defined
-    - item.ansible_job_id is defined
+    - item is defined
 
 - name: waiting for instance creation to complete
   async_status: jid="{{ item.ansible_job_id }}"

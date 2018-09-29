@@ -72,7 +72,7 @@
     var: item.ansible_job_id
   loop:
     - "{{ deploy_linux.results | default(omit) }}"
-    - "{{ deploy_windows.results }}"
+    - "{{ deploy_windows.results | default(omit) }}"
   when:
     - nodes is defined
     - item is defined

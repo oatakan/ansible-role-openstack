@@ -18,6 +18,7 @@
     #  password: "{{ clouds.devstack.auth.password | default(lookup('env', 'OS_PASSWORD')) }}"
     #  project_name: "{{ clouds.devstack.auth.project_name | default(lookup('env', 'OS_PROJECT_NAME')) }}"
     name: "{{ hostvars[inventory_hostname].openstack.name }}"
+    terminate_volume: yes
   delegate_to: localhost
   loop: "{{ nodes }}"
   when:

@@ -12,11 +12,6 @@
 - name: remove intances
   os_server:
     state: absent
-    #auth:
-    #  auth_url: "{{ clouds.devstack.auth.auth_url | default(lookup('env', 'OS_AUTH_URL')) }}"
-    #  username: "{{ clouds.devstack.auth.username | default(lookup('env', 'OS_USERNAME')) }}"
-    #  password: "{{ clouds.devstack.auth.password | default(lookup('env', 'OS_PASSWORD')) }}"
-    #  project_name: "{{ clouds.devstack.auth.project_name | default(lookup('env', 'OS_PROJECT_NAME')) }}"
     name: "{{ hostvars[inventory_hostname].openstack.name }}"
     terminate_volume: yes
   delegate_to: localhost

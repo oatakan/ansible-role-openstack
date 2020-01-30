@@ -12,10 +12,10 @@
 - name: remove intances
   os_server:
     state: absent
-    name: "{{ hostvars[inventory_hostname].openstack.name }}"
+    name: "{{ hostvars[item].openstack.name }}"
     terminate_volume: yes
   delegate_to: localhost
-  loop: "{{ ansible_play_hosts }}"
+  loop: "{{ ansible_play_hosts_all }}"
   when:
     - nodes is defined
     - hostvars[item].openstack.name is defined

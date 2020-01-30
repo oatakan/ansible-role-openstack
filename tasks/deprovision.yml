@@ -18,5 +18,5 @@
   loop: "{{ nodes }}"
   when:
     - nodes is defined
-    - hostvars[inventory_hostname].openstack.name is defined
+    - hostvars[item.name].openstack.name is defined
     - item.name == hostvars[inventory_hostname].openstack.name

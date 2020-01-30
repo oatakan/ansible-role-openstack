@@ -15,8 +15,10 @@
     name: "{{ hostvars[inventory_hostname].openstack.name }}"
     terminate_volume: yes
   delegate_to: localhost
-  with_items: "{{ nodes }}"
+  loop: "{{ ansible_play_hosts }}"
   when:
     - nodes is defined
-    - hostvars[item.name].openstack.name is defined
-    - item.name == hostvars[inventory_hostname].openstack.name
+    - hostvars[item].openstack.name is defined
+    - (nodes | json_query(query)) | length > 0
+  vars:
+    query: "@[?name==`{{ hostvars[item].openstack.name }}`]"

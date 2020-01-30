@@ -15,7 +15,7 @@
     name: "{{ hostvars[inventory_hostname].openstack.name }}"
     terminate_volume: yes
   delegate_to: localhost
-  loop: "{{ nodes }}"
+  with_items: "{{ nodes }}"
   when:
     - nodes is defined
     - hostvars[item.name].openstack.name is defined

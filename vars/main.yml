@@ -1,0 +1,3 @@
+---
+
+win_os_c_drive_partition: "{{ '4' if (item.efi is defined and item.efi|bool) else '2' }}"

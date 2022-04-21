@@ -11,4 +11,8 @@ instance_wait_connection_timeout: 300
 
 pause_in_seconds: 60
 
-deploy_async: no
+deploy_async: false
+
+wait_for_connection: true
+
+set_network_to_private: '([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))).GetNetworkConnections() | % {$_.GetNetwork().SetCategory(1)}'

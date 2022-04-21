@@ -1,7 +1,8 @@
 ---
 
 - name: check openstack config file
-  stat: path="{{ config_file }}"
+  stat:
+    path: "{{ config_file | default('config_file') }}"
   register: st
   delegate_to: localhost
 
@@ -10,7 +11,7 @@
   when: st.stat.exists and st.stat.isreg
 
 - name: remove intances
-  os_server:
+  openstack.cloud.server:
     state: absent
     name: "{{ hostvars[item].openstack.name }}"
     terminate_volume: yes

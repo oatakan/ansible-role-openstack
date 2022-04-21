@@ -1,12 +1,16 @@
 ---
 
 - name: check openstack config file
-  stat: path="{{ config_file }}"
+  stat:
+    path: "{{ config_file | default('config_file') }}"
   register: st
 
 - name: include openstack details
   include_vars: "{{ config_file }}"
   when: st.stat.exists and st.stat.isreg
+
+- debug:
+    msg: "{{ nodes }}"
 
 - include_tasks: provision_async.yml
   when: deploy_async
@@ -21,6 +25,7 @@
     timeout: "{{ instance_wait_connection_timeout }}"
   loop: "{{ instances.results }}"
   when:
+    - wait_for_connection
     - instances.results is defined
     - nodes is defined
     - item.openstack is defined
@@ -36,6 +41,7 @@
   loop: "{{ instances.results }}"
   ignore_errors: yes
   when:
+    - wait_for_connection
     - instances.results is defined
     - nodes is defined
     - item.openstack is defined

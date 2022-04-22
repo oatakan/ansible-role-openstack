@@ -7,7 +7,7 @@ env: test
 instance_timeout: 600
 
 instance_wait_retry_limit: 300
-instance_wait_connection_timeout: 300
+instance_wait_connection_timeout: 600
 
 pause_in_seconds: 60
 

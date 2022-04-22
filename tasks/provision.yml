@@ -39,7 +39,7 @@
     ansible_winrm_server_cert_validation: ignore
   delegate_to: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"
   loop: "{{ instances.results }}"
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - wait_for_connection
     - instances.results is defined

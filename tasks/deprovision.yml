@@ -15,6 +15,7 @@
     state: absent
     name: "{{ hostvars[item].openstack.name }}"
     terminate_volume: yes
+    validate_certs: "{{ openstack_validate_certs }}"
   delegate_to: localhost
   loop: "{{ ansible_play_hosts_all }}"
   when:

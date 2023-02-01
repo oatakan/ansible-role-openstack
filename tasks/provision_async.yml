@@ -20,6 +20,7 @@
     auto_ip: "{{ item.auto_ip | default ('yes') }}"
     volumes: "{{ item.volumes | default (omit) }}"
     wait: yes
+    validate_certs: "{{ openstack_validate_certs }}"
   async: 7200
   poll: 0
   register: deploy_linux
@@ -48,6 +49,7 @@
     auto_ip: "{{ item.auto_ip | default ('yes') }}"
     volumes: "{{ item.volumes | default (omit) }}"
     wait: yes
+    validate_certs: "{{ openstack_validate_certs }}"
   async: 7200
   poll: 0
   register: deploy_windows

@@ -21,7 +21,7 @@
 - name: waiting for servers to come online
   wait_for:
     host: "{{ item.openstack.public_v4|default(item.openstack.interface_ip) }}"
-    port: "{{ ansible_port }}"
+    port: "{{ ansible_port | default('22') }}"
     timeout: "{{ instance_wait_connection_timeout }}"
   loop: "{{ instances.results }}"
   when:

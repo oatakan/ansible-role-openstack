@@ -18,6 +18,7 @@
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
     auto_ip: "{{ item.auto_ip | default ('yes') }}"
+    floating_ips: "{{ item.floating_ips | default(omit) }}"
     volumes: "{{ server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"
@@ -47,6 +48,7 @@
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
     auto_ip: "{{ item.auto_ip | default ('yes') }}"
+    floating_ips: "{{ item.floating_ips | default(omit) }}"
     volumes: "{{ server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"

@@ -1,5 +1,7 @@
 ---
 
+- include_tasks: preflight_check.yml
+
 - name: check openstack config file
   stat:
     path: "{{ config_file | default('config_file') }}"
@@ -8,9 +10,6 @@
 - name: include openstack details
   include_vars: "{{ config_file }}"
   when: st.stat.exists and st.stat.isreg
-
-- debug:
-    msg: "{{ nodes }}"
 
 - include_tasks: provision_async.yml
   when: deploy_async

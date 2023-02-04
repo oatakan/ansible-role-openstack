@@ -3,65 +3,69 @@
 - name: linux - launch a compute instance (async)
   openstack.cloud.server:
     state: present
-    name: "{{ item.name }}"
-    image: "{{ item.image | default(omit) }}"
-    key_name: "{{ item.key_name }}"
+    name: "{{ node.name }}"
+    image: "{{ node.image | default(omit) }}"
+    key_name: "{{ node.key_name }}"
     timeout: "{{ instance_timeout }}"
-    flavor: "{{ item.flavor }}"
-    nics: "{{ item.nics }}"
+    flavor: "{{ node.flavor }}"
+    nics: "{{ node.nics }}"
     boot_from_volume: "{{ _boot_from_volume }}"
     terminate_volume: "{{ _terminate_volume }}"
     boot_volume: "{{ _boot_volume }}"
-    volume_size: "{{ item.volume_size }}"
-    userdata: "{{ item.user_data | default('') }}"
+    volume_size: "{{ _volume_size }}"
+    userdata: "{{ node.user_data | default('') }}"
     meta:
-      hostname: "{{ item.name }}"
-      role: "{{ item.role }}"
-      app_name: "{{ item.app_name }}"
-    auto_ip: "{{ omit if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
-    floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
-    volumes: "{{ server_volumes }}"
+      hostname: "{{ node.name }}"
+      role: "{{ node.role }}"
+      app_name: "{{ node.app_name }}"
+    auto_ip: "{{ _auto_ip }}"
+    floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
+    attached_volumes: "{{ _server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"
   async: 7200
   poll: 0
   register: deploy_linux
   loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
   when:
     - nodes is defined
-    - item.os_type is not defined or (item.os_type is defined and item.os_type | lower == 'linux')
+    - node.os_type is not defined or (node.os_type is defined and node.os_type | lower == 'linux')
 
 - name: windows - launch a compute instance (async)
   openstack.cloud.server:
     state: present
-    name: "{{ item.name }}"
-    image: "{{ item.image | default(omit) }}"
-    key_name: "{{ item.key_name }}"
+    name: "{{ node.name }}"
+    image: "{{ node.image | default(omit) }}"
+    key_name: "{{ node.key_name }}"
     timeout: "{{ instance_timeout }}"
-    flavor: "{{ item.flavor }}"
-    nics: "{{ item.nics }}"
+    flavor: "{{ node.flavor }}"
+    nics: "{{ node.nics }}"
     boot_from_volume: "{{ _boot_from_volume }}"
     terminate_volume: "{{ _terminate_volume }}"
     boot_volume: "{{ _boot_volume }}"
-    volume_size: "{{ item.volume_size }}"
-    userdata: "{{ item.user_data | default(lookup('template', 'templates/userdata.txt.j2')) }}"
+    volume_size: "{{ _volume_size }}"
+    userdata: "{{ node.user_data | default(lookup('template', 'templates/userdata.txt.j2')) }}"
     meta:
-      hostname: "{{ item.name }}"
-      role: "{{ item.role }}"
-      app_name: "{{ item.app_name }}"
-    auto_ip: "{{ omit if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
-    floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
-    volumes: "{{ server_volumes }}"
+      hostname: "{{ node.name }}"
+      role: "{{ node.role }}"
+      app_name: "{{ node.app_name }}"
+    auto_ip: "{{ _auto_ip }}"
+    floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
+    attached_volumes: "{{ _server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"
   async: 7200
   poll: 0
   register: deploy_windows
   loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
   when:
     - nodes is defined
-    - item.os_type is defined
-    - item.os_type | lower == 'windows'
+    - node.os_type is defined
+    - node.os_type | lower == 'windows'
 
 - name: combine deployment results
   set_fact:

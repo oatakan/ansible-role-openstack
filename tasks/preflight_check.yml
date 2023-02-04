@@ -1,0 +1,11 @@
+---
+
+- name: check all nodes
+  fail:
+    msg: "make sure only image or volume_iso_template is defined for nodes."
+  loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
+  when:
+    - node.image is defined
+    - node.volume_iso_template is defined

@@ -17,7 +17,7 @@
       hostname: "{{ item.name }}"
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
-    auto_ip: "{{ 'no' if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
+    auto_ip: "{{ omit if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
     floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
     volumes: "{{ server_volumes }}"
     wait: yes
@@ -45,7 +45,7 @@
       hostname: "{{ item.name }}"
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
-    auto_ip: "{{ 'no' if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
+    auto_ip: "{{ omit if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
     floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
     volumes: "{{ server_volumes }}"
     wait: yes

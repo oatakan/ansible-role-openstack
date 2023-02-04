@@ -4,7 +4,7 @@
   openstack.cloud.server:
     state: present
     name: "{{ item.name }}"
-    image: "{{ item.image }}"
+    image: "{{ item.image | default(omit) }}"
     key_name: "{{ item.key_name }}"
     timeout: "{{ instance_timeout }}"
     flavor: "{{ item.flavor }}"
@@ -31,7 +31,7 @@
   openstack.cloud.server:
     state: present
     name: "{{ item.name }}"
-    image: "{{ item.image }}"
+    image: "{{ item.image | default(omit) }}"
     key_name: "{{ item.key_name }}"
     timeout: "{{ instance_timeout }}"
     flavor: "{{ item.flavor }}"
@@ -45,7 +45,7 @@
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
     auto_ip: "{{ item.auto_ip | default ('yes') }}"
-    volumes: "{{ item.volumes | default (omit) }}"
+    volumes: "{{ server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"
   register: deploy_windows

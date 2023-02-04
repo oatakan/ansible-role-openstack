@@ -1,0 +1,44 @@
+---
+
+- name: waiting for ip address to be assigned
+  openstack.cloud.server_info:
+    server: "{{ item.server.name }}"
+    filters:
+      vm_state: active
+    validate_certs: false
+  register: servers
+  until: servers.access_ipv4 | length > 0
+  retries: 300
+  delay: 10
+  loop: "{{ instances.results }}"
+  when:
+    - nodes is defined
+    - instances.results is defined
+    - item.vm is defined
+
+- name: waiting for servers to come online
+  wait_for:
+    host: "{{ item.access_ipv4 }}"
+    port: "{{ item.item.item.item.ansible_port | default(ansible_port) | default('22') }}"
+    timeout: "{{ instance_wait_connection_timeout }}"
+  loop: "{{ servers.results }}"
+  when:
+    - servers.results is defined
+    - item.access_ipv4 is defined
+    - item.access_ipv4 | length
+
+- name: waiting for windows systems to be available for connection
+  wait_for_connection:
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: credssp
+    ansible_winrm_server_cert_validation: ignore
+  delegate_to: "{{ item.access_ipv4 }}"
+  loop: "{{ servers.results }}"
+  ignore_errors: true
+  when:
+    - servers.results is defined
+    - item.access_ipv4 is defined
+    - item.access_ipv4 | length
+    - ansible_port is defined
+    - ansible_port == 5986

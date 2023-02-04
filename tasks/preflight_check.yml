@@ -9,3 +9,17 @@
   when:
     - node.image is defined
     - node.volume_iso_template is defined
+
+- name: check openstack config file
+  stat:
+    path: "{{ config_file | default('config_file') }}"
+  register: st
+
+- name: include openstack details
+  include_vars: "{{ config_file }}"
+  when: st.stat.exists and st.stat.isreg
+
+- name: Login to openstack
+  openstack.cloud.auth:
+    validate_certs: false
+  register: openstack_login_auth

@@ -2,6 +2,6 @@
 
 win_os_c_drive_partition: "{{ '4' if (item.efi is defined and item.efi|bool) else '2' }}"
 
-template_iso_volume_name: "iso-auto-{{ item.volume_iso_template | default('') }}_{{ node.name }}_linux_{{ awx_job_id | default('') }}.iso"
+template_iso_volume_name: "iso-auto-{{ item.volume_iso_template | default('') }}_{{ item.name }}_linux_{{ awx_job_id | default('') }}.iso"
 
 server_volumes: "{{ ( (item.volumes | default([])) + [template_iso_volume_name] if (item.volume_iso_template is defined and item.volume_iso_template | length) else (item.volumes | default(omit))) | default(omit) }}"

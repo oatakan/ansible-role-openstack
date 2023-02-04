@@ -6,10 +6,10 @@
     filters:
       vm_state: active
     validate_certs: false
-  register: servers
+  register: server_info
   until:
-    - item.server.access_ipv4 is defined
-    - item.server.access_ipv4 | length
+    - server_info.servers[0].access_ipv4 is defined
+    - server_info.servers[0].access_ipv4 | length
   retries: 300
   delay: 10
   loop: "{{ instances.results }}"
@@ -17,17 +17,18 @@
     - nodes is defined
     - instances.results is defined
     - item.server.name is defined
+    - server_info.servers | length
 
 - name: waiting for servers to come online
   wait_for:
-    host: "{{ item.server.access_ipv4 }}"
+    host: "{{ item.servers[0].access_ipv4 }}"
     port: "{{ item.item.item.item.ansible_port | default(ansible_port) | default('22') }}"
     timeout: "{{ instance_wait_connection_timeout }}"
-  loop: "{{ servers.results }}"
+  loop: "{{ server_info.results }}"
   when:
-    - servers.results is defined
-    - item.server.access_ipv4 is defined
-    - item.server.access_ipv4 | length
+    - server_info.results is defined
+    - item.servers[0].access_ipv4 is defined
+    - item.servers[0].access_ipv4 | length
 
 - name: waiting for windows systems to be available for connection
   wait_for_connection:
@@ -35,12 +36,12 @@
     ansible_connection: winrm
     ansible_winrm_transport: credssp
     ansible_winrm_server_cert_validation: ignore
-  delegate_to: "{{ item.server.access_ipv4 }}"
-  loop: "{{ servers.results }}"
+  delegate_to: "{{ item.servers[0].access_ipv4 }}"
+  loop: "{{ server_info.results }}"
   ignore_errors: true
   when:
-    - servers.results is defined
-    - item.server.access_ipv4 is defined
-    - item.server.access_ipv4 | length
+    - server_info.results is defined
+    - item.servers[0].access_ipv4 is defined
+    - item.servers[0].access_ipv4 | length
     - ansible_port is defined
     - ansible_port == 5986

@@ -11,6 +11,13 @@
   include_vars: "{{ config_file }}"
   when: st.stat.exists and st.stat.isreg
 
+- name: create os volumes if needed
+  include_tasks: os_volume.yml
+  loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
+  when: node.volume_iso_template is defined
+
 - include_tasks: provision_async.yml
   when: deploy_async
 

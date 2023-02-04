@@ -1,0 +1,67 @@
+---
+
+- name: create main volume
+  openstack.cloud.volume:
+    state: present
+    display_name: '{{ _main_volume_name }}'
+    size: '{{ node.volume_size }}'
+    bootable: true
+    validate_certs: false
+  register: main_disk_volume
+
+# for some reason volume bootable setting is not to true on zed and openstack cloud collection 2.0.0-dev
+- block:
+    - name: set auth object
+      set_fact:
+        os_auth:
+          auth_url: "{{ lookup('env', 'OS_AUTH_URL') }}"
+          username: "{{ lookup('env', 'OS_USERNAME') }}"
+          password: "{{ lookup('env', 'OS_PASSWORD') }}"
+          project_name: "{{ lookup('env', 'OS_PROJECT_NAME') }}"
+          user_domain_name: "{{ lookup('env', 'OS_USER_DOMAIN_NAME') | default('Default') }}"
+          project_domain_name: "{{ lookup('env', 'OS_PROJECT_DOMAIN_NAME') | default('Default') }}"
+      no_log: true
+
+    - name: Get endpoints
+      uri:
+        url: "{{ os_auth.auth_url }}/auth/tokens"
+        method: POST
+        body: "{{ request_auth | to_json }}"
+        headers:
+          Content-Type: application/json
+        status_code:
+          - 200
+          - 201
+        validate_certs: false
+      register: openstack_endpoints
+      vars:
+        request_auth:
+          auth:
+            identity:
+              methods:
+                - password
+              password:
+                user:
+                  domain:
+                    name: "{{ os_auth.user_domain_name }}"
+                  name: "{{ os_auth.username }}"
+                  password: "{{ os_auth.password }}"
+            scope:
+              project:
+                domain:
+                  name: "{{ os_auth.project_domain_name }}"
+                name: "{{ os_auth.project_name }}"
+
+    - name: Set bootable setting to True
+      uri:
+        url: "{{ volume_public_endpoint.url }}/volumes/{{ main_disk_volume.volume.id }}/action"
+        method: POST
+        body: '{"os-set_bootable": {"bootable": true}}'
+        headers:
+          X-Auth-Token: "{{ openstack_login_auth.auth_token }}"
+          Content-Type: application/json
+        validate_certs: false
+      register: set_bootable_setting
+      vars:
+        volume_public_endpoint: "{{ (openstack_endpoints.json.token.catalog | selectattr('type', 'eq', 'volumev3') | first).endpoints | selectattr('interface', 'eq', 'public') | first }}"
+  when: not main_disk_volume.volume.is_bootable

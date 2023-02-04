@@ -17,8 +17,8 @@
       hostname: "{{ item.name }}"
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
-    auto_ip: "{{ 'no' if (floating_ips | length) (item.auto_ip | default ('yes')) }}"
-    floating_ips: "{{ floating_ips if (floating_ips | length) omit }}"
+    auto_ip: "{{ 'no' if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
+    floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
     volumes: "{{ server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"
@@ -45,8 +45,8 @@
       hostname: "{{ item.name }}"
       role: "{{ item.role }}"
       app_name: "{{ item.app_name }}"
-    auto_ip: "{{ 'no' if (floating_ips | length) (item.auto_ip | default ('yes')) }}"
-    floating_ips: "{{ floating_ips if (floating_ips | length) omit }}"
+    auto_ip: "{{ 'no' if (floating_ips | length) else (item.auto_ip | default ('yes')) }}"
+    floating_ips: "{{ floating_ips if (floating_ips | length) else omit }}"
     volumes: "{{ server_volumes }}"
     wait: yes
     validate_certs: "{{ openstack_validate_certs }}"

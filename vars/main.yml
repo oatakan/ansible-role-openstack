@@ -4,13 +4,13 @@ win_os_c_drive_partition: "{{ '4' if (node.efi is defined and node.efi|bool) els
 
 _template_iso_volume_name: "iso-auto-{{ node.volume_iso_template | default('') }}_{{ node.name }}_linux_{{ awx_job_id | default('') }}.iso"
 
-_server_volumes: "{{ ( (node.volumes | default([])) + [_template_iso_volume_name] if (node.volume_iso_template is defined and node.volume_iso_template | length) else (node.volumes | default(omit))) | default(omit) }}"
+_server_volumes: "{{ ( (node.volumes | default([])) + [_main_volume_name] if (node.volume_iso_template is defined and node.volume_iso_template | length) else (node.volumes | default(omit))) | default(omit) }}"
 
 _boot_from_volume: "{{ omit if (node.volume_iso_template is defined and node.volume_iso_template | length) else (node.boot_from_volume | default('yes')) }}"
 _terminate_volume: "{{ 'yes' if (node.volume_iso_template is defined and node.volume_iso_template | length) else (node.boot_from_volume | default('yes')) }}"
 _volume_size: "{{ omit if (node.volume_iso_template is defined and node.volume_iso_template | length) else (node.volume_size | default(omit)) }}"
 
-_boot_volume: "{{ main_disk_volume.volume.id if (node.volume_iso_template is defined and node.volume_iso_template | length) else omit }}"
+_boot_volume: "{{ _template_iso_volume_name if (node.volume_iso_template is defined and node.volume_iso_template | length) else omit }}"
 
 _main_volume_name: "{{ node.name | replace('_', '-') | replace('.', '-') }}_disk"
 

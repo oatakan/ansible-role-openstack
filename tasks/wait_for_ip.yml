@@ -7,7 +7,7 @@
       vm_state: active
     validate_certs: false
   register: servers
-  until: servers.access_ipv4 | length > 0
+  until: item.access_ipv4 | length > 0
   retries: 300
   delay: 10
   loop: "{{ instances.results }}"

@@ -62,6 +62,7 @@
           Content-Type: application/json
         validate_certs: false
       register: set_bootable_setting
+      ignore_errors: true
       vars:
         volume_public_endpoint: "{{ (openstack_endpoints.json.token.catalog | selectattr('type', 'eq', 'volumev3') | first).endpoints | selectattr('interface', 'eq', 'public') | first }}"
   when: not main_disk_volume.volume.is_bootable

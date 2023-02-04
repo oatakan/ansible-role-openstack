@@ -9,8 +9,8 @@
     timeout: "{{ instance_timeout }}"
     flavor: "{{ item.flavor }}"
     nics: "{{ item.nics }}"
-    boot_from_volume: "{{ item.boot_from_volume | default('yes') }}"
-    terminate_volume: "{{ item.terminate_volume | default('yes') }}"
+    boot_from_volume: "{{ _boot_from_volume }}"
+    terminate_volume: "{{ _terminate_volume }}"
     volume_size: "{{ item.volume_size }}"
     userdata: "{{ item.user_data | default('') }}"
     meta:
@@ -37,8 +37,8 @@
     timeout: "{{ instance_timeout }}"
     flavor: "{{ item.flavor }}"
     nics: "{{ item.nics }}"
-    boot_from_volume: "{{ item.boot_from_volume | default('yes') }}"
-    terminate_volume: "{{ item.terminate_volume | default('yes') }}"
+    boot_from_volume: "{{ _boot_from_volume }}"
+    terminate_volume: "{{ _terminate_volume }}"
     volume_size: "{{ item.volume_size }}"
     userdata: "{{ item.user_data | default(lookup('template', 'templates/userdata.txt.j2')) }}"
     meta:

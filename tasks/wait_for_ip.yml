@@ -14,7 +14,7 @@
   when:
     - nodes is defined
     - instances.results is defined
-    - item.vm is defined
+    - item.server.name is defined
 
 - name: waiting for servers to come online
   wait_for:

@@ -8,6 +8,8 @@
     validate_certs: false
   register: server_info
   until:
+    - server_info.servers is defined
+    - server_info.servers | length
     - server_info.servers[0].access_ipv4 is defined
     - server_info.servers[0].access_ipv4 | length
   retries: 300
@@ -17,7 +19,6 @@
     - nodes is defined
     - instances.results is defined
     - item.server.name is defined
-    - server_info.servers | length
 
 - name: waiting for servers to come online
   wait_for:

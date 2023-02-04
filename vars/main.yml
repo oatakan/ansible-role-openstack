@@ -9,4 +9,6 @@ server_volumes: "{{ ( (item.volumes | default([])) + [template_iso_volume_name] 
 _boot_from_volume: "{{ 'no' if (item.volume_iso_template is defined and item.volume_iso_template | length) else (item.boot_from_volume | default('yes')) }}"
 _terminate_volume: "{{ 'no' if (item.volume_iso_template is defined and item.volume_iso_template | length) else (item.boot_from_volume | default('yes')) }}"
 
+_boot_volume: "{{ template_iso_volume_name if (item.volume_iso_template is defined and item.volume_iso_template | length) else omit }}"
+
 floating_ips: "{{ item.floating_ips | default(item.networks  | default([]) | map(attribute='ip') | list) | default(None) }}"

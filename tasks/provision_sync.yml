@@ -11,6 +11,7 @@
     nics: "{{ item.nics }}"
     boot_from_volume: "{{ _boot_from_volume }}"
     terminate_volume: "{{ _terminate_volume }}"
+    boot_volume: "{{ _boot_volume }}"
     volume_size: "{{ item.volume_size }}"
     userdata: "{{ item.user_data | default('') }}"
     meta:
@@ -39,6 +40,7 @@
     nics: "{{ item.nics }}"
     boot_from_volume: "{{ _boot_from_volume }}"
     terminate_volume: "{{ _terminate_volume }}"
+    boot_volume: "{{ _boot_volume }}"
     volume_size: "{{ item.volume_size }}"
     userdata: "{{ item.user_data | default(lookup('template', 'templates/userdata.txt.j2')) }}"
     meta:

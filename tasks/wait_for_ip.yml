@@ -37,6 +37,7 @@
     ansible_connection: winrm
     ansible_winrm_transport: credssp
     ansible_winrm_server_cert_validation: ignore
+    _ansible_port: "{{ item.item.item.item.ansible_port | default(ansible_port) | default('22') }}"
   delegate_to: "{{ item.servers[0].access_ipv4 }}"
   loop: "{{ server_info.results }}"
   ignore_errors: true
@@ -44,5 +45,4 @@
     - server_info.results is defined
     - item.servers[0].access_ipv4 is defined
     - item.servers[0].access_ipv4 | length
-    - ansible_port is defined
-    - ansible_port == 5986
+    - _ansible_port == 5986

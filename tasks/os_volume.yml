@@ -1,18 +1,32 @@
 ---
 
-- name: create main volume
+- name: Create main volume
   openstack.cloud.volume:
     state: present
     display_name: '{{ _main_volume_name }}'
     size: '{{ node.volume_size }}'
     bootable: true
-    validate_certs: false
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   register: main_disk_volume
 
 # for some reason volume bootable setting is not to true on zed and openstack cloud collection 2.0.0-dev
-- block:
-    - name: set auth object
-      set_fact:
+- name: Ensure volume is bootable (workaround)
+  when: not main_disk_volume.volume.is_bootable
+  block:
+    - name: Ensure required OS_* env vars exist for bootable workaround
+      ansible.builtin.assert:
+        that:
+          - lookup('env', 'OS_AUTH_URL') | length > 0
+          - lookup('env', 'OS_USERNAME') | length > 0
+          - lookup('env', 'OS_PASSWORD') | length > 0
+          - lookup('env', 'OS_PROJECT_NAME') | length > 0
+        fail_msg: >-
+          Volume was created but is not bootable, and the bootable workaround requires
+          OS_AUTH_URL/OS_USERNAME/OS_PASSWORD/OS_PROJECT_NAME to be present in the environment.
+      no_log: true
+
+    - name: Set auth object
+      ansible.builtin.set_fact:
         os_auth:
           auth_url: "{{ lookup('env', 'OS_AUTH_URL') }}"
           username: "{{ lookup('env', 'OS_USERNAME') }}"
@@ -23,7 +37,7 @@
       no_log: true
 
     - name: Get endpoints
-      uri:
+      ansible.builtin.uri:
         url: "{{ os_auth.auth_url }}/auth/tokens"
         method: POST
         body: "{{ request_auth | to_json }}"
@@ -32,8 +46,9 @@
         status_code:
           - 200
           - 201
-        validate_certs: false
+        validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
       register: openstack_endpoints
+      no_log: true
       vars:
         request_auth:
           auth:
@@ -52,17 +67,44 @@
                   name: "{{ os_auth.project_domain_name }}"
                 name: "{{ os_auth.project_name }}"
 
+    - name: Set token fact from Keystone response
+      ansible.builtin.set_fact:
+        os_auth_token: >-
+          {{
+            openstack_endpoints.get('x_subject_token')
+            | default(openstack_endpoints.get('headers', {}).get('X-Subject-Token')
+            | default(openstack_endpoints.get('headers', {}).get('x-subject-token')
+            | default('')))
+          }}
+      no_log: true
+
+    - name: Fail if Keystone did not return a token
+      ansible.builtin.fail:
+        msg: "Keystone token request succeeded but no X-Subject-Token was returned."
+      when: os_auth_token | default('') | length == 0
+
     - name: Set bootable setting to True
-      uri:
+      ansible.builtin.uri:
         url: "{{ volume_public_endpoint.url }}/volumes/{{ main_disk_volume.volume.id }}/action"
         method: POST
         body: '{"os-set_bootable": {"bootable": true}}'
         headers:
-          X-Auth-Token: "{{ openstack_login_auth.auth_token }}"
+          X-Auth-Token: "{{ os_auth_token }}"
           Content-Type: application/json
-        validate_certs: false
+        status_code:
+          - 200
+          - 202
+        validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
       register: set_bootable_setting
-      ignore_errors: true
+      no_log: true
       vars:
-        volume_public_endpoint: "{{ (openstack_endpoints.json.token.catalog | selectattr('type', 'eq', 'volumev3') | first).endpoints | selectattr('interface', 'eq', 'public') | first }}"
-  when: not main_disk_volume.volume.is_bootable
+        volume_service: >-
+          {{
+            (openstack_endpoints.json.token.catalog | selectattr('type', 'eq', 'volumev3') | list | first)
+            | default((openstack_endpoints.json.token.catalog | selectattr('type', 'eq', 'volume') | list | first), true)
+          }}
+        volume_public_endpoint: >-
+          {{
+            (volume_service.endpoints | selectattr('interface', 'eq', 'public') | list | first)
+            | default((volume_service.endpoints | selectattr('interface', 'eq', 'internal') | list | first), true)
+          }}

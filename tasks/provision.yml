@@ -1,22 +1,58 @@
 ---
 
-- include_tasks: preflight_check.yml
+- name: Provision servers
+  block:
 
-- name: create os volumes if needed
-  include_tasks: os_volume.yml
-  loop: "{{ nodes }}"
-  loop_control:
-    loop_var: node
-  when: node.volume_iso_template is defined
+    - name: Preflight checks
+      ansible.builtin.include_tasks: preflight_check.yml
 
-- include_tasks: provision_async.yml
-  when: deploy_async
+    - name: Create OS volumes if needed
+      ansible.builtin.include_tasks: os_volume.yml
+      loop: "{{ nodes }}"
+      loop_control:
+        loop_var: node
+      when: node.volume_iso_template is defined
 
-- include_tasks: provision_sync.yml
-  when: not deploy_async
+    - name: Provision async
+      ansible.builtin.include_tasks: provision_async.yml
+      when: deploy_async
 
-- include_tasks: wait_for_ip.yml
-  when:
-    - wait_for_connection
-    - instances.results is defined
-    - nodes is defined
+    - name: Provision sync
+      ansible.builtin.include_tasks: provision_sync.yml
+      when: not deploy_async
+
+    - name: Wait for IP and connectivity
+      ansible.builtin.include_tasks: wait_for_ip.yml
+      when:
+        - wait_for_connection
+        - nodes is defined
+
+  rescue:
+
+    - name: Surface root cause
+      ansible.builtin.debug:
+        var: ansible_failed_result
+
+    - name: Best-effort deprovision on failure
+      ansible.builtin.include_tasks: deprovision.yml
+      when:
+        - openstack_deprovision_best_effort | default(false) | bool
+        - nodes is defined
+
+    - name: Fail with actionable message
+      ansible.builtin.fail:
+        msg: >-
+          Provisioning failed.
+          Preflight should have validated referenced networks/images/flavors/keypairs.
+          Error: {{
+            (
+              (ansible_failed_result.results | default([]))
+              | selectattr('failed', 'defined')
+              | selectattr('failed')
+              | map(attribute='msg')
+              | select('defined')
+              | list
+              | first
+            )
+            | default(ansible_failed_result.msg | default(ansible_failed_result), true)
+          }}

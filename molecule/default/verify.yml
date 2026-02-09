@@ -1,0 +1,62 @@
+---
+- name: Verify
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    openstack_validate_certs: false
+    molecule_base_count: "{{ lookup('env', 'OS_STACK_BASE_COUNT') | default('1', true) | int }}"
+
+  tasks:
+    - name: Validate baseline node count
+      ansible.builtin.assert:
+        that:
+          - molecule_base_count | int >= 1
+          - molecule_base_count | int <= 5
+        fail_msg: >-
+          OS_STACK_BASE_COUNT must be between 1 and 5.
+
+    - name: Assert instances exist and are ACTIVE
+      openstack.cloud.server_info:
+        validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
+        server: "{{ item }}"
+      register: molecule_server
+      failed_when:
+        - molecule_server.servers is not defined or (molecule_server.servers | length) != 1
+        - (molecule_server.servers[0].status | default('UNKNOWN')) not in ['ACTIVE']
+      loop: "{{ range(1, (molecule_base_count | int) + 1) | list | map('regex_replace', '^', 'molecule-openstack') | list }}"
+
+    - name: Negative test - missing image fails preflight
+      block:
+        - name: Run role with a non-existent image
+          ansible.builtin.include_role:
+            name: ansible-role-openstack
+          vars:
+            role_action: provision
+            wait_for_connection: false
+            openstack_validate_certs: false
+            nodes:
+              - name: "molecule-openstack-negative"
+                app_name: "molecule-openstack-negative"
+                role: "molecule"
+                os_type: "linux"
+                image: "__molecule_image_does_not_exist__"
+                flavor: "{{ lookup('env', 'OS_STACK_FLAVOR') | default('m1.small', true) }}"
+                key_name: >-
+                  {{ lookup('env', 'OS_PROV_KEY_NAME')
+                    | default(lookup('env', 'OS_STACK_KEYPAIR'), true) }}
+                nics:
+                  - net-name: "{{ lookup('env', 'OS_STACK_PRIVATE_NETWORK') | default('private_network', true) }}"
+                auto_ip: false
+
+        - name: Fail if role unexpectedly succeeded
+          ansible.builtin.fail:
+            msg: "Expected role to fail preflight due to missing image, but it succeeded"
+
+      rescue:
+        - name: Assert failure mentions missing image
+          ansible.builtin.assert:
+            that:
+              - ansible_failed_result is defined
+              - (ansible_failed_result | to_nice_json) is search('OpenStack image')
+            fail_msg: "Expected missing-image preflight error, got: {{ ansible_failed_result | to_nice_json }}"

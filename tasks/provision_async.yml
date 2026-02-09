@@ -1,6 +1,6 @@
 ---
 
-- name: linux - launch a compute instance (async)
+- name: Linux - launch a compute instance (async)
   openstack.cloud.server:
     state: present
     name: "{{ node.name }}"
@@ -21,8 +21,8 @@
     auto_ip: "{{ _auto_ip }}"
     floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
     volumes: "{{ _server_volumes }}"
-    wait: yes
-    validate_certs: "{{ openstack_validate_certs }}"
+    wait: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   async: 7200
   poll: 0
   register: deploy_linux
@@ -33,7 +33,7 @@
     - nodes is defined
     - node.os_type is not defined or (node.os_type is defined and node.os_type | lower == 'linux')
 
-- name: windows - launch a compute instance (async)
+- name: Windows - launch a compute instance (async)
   openstack.cloud.server:
     state: present
     name: "{{ node.name }}"
@@ -54,8 +54,8 @@
     auto_ip: "{{ _auto_ip }}"
     floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
     volumes: "{{ _server_volumes }}"
-    wait: yes
-    validate_certs: "{{ openstack_validate_certs }}"
+    wait: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   async: 7200
   poll: 0
   register: deploy_windows
@@ -67,17 +67,17 @@
     - node.os_type is defined
     - node.os_type | lower == 'windows'
 
-- name: combine deployment results
-  set_fact:
-    deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
-  loop: "{{ deploy_linux.results + deploy_windows.results }}"
-  no_log: yes
+- name: Combine deployment results
+  ansible.builtin.set_fact:
+    deploy_results: "{{ deploy_results | default([]) + [item] }}"
+  loop: "{{ (deploy_linux.results | default([])) + (deploy_windows.results | default([])) }}"
+  no_log: true
   when:
     - nodes is defined
     - item.ansible_job_id is defined
 
-- name: waiting for instance creation to complete
-  async_status:
+- name: Wait for instance creation to complete
+  ansible.builtin.async_status:
     jid: "{{ item.ansible_job_id }}"
   register: instances
   until: instances.finished

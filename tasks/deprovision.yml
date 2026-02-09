@@ -1,26 +1,60 @@
 ---
 
-- name: check openstack config file
-  stat:
-    path: "{{ config_file | default('config_file') }}"
+
+- name: Check config_file if provided
+  ansible.builtin.stat:
+    path: "{{ config_file }}"
   register: st
   delegate_to: localhost
+  when:
+    - config_file is defined
+    - config_file | length > 0
 
-- name: include openstack details
-  include_vars: "{{ config_file }}"
-  when: st.stat.exists and st.stat.isreg
+- name: Fail if config_file is missing
+  ansible.builtin.fail:
+    msg: "config_file was set but not found: {{ config_file }}"
+  when:
+    - config_file is defined
+    - config_file | length > 0
+    - st is defined
+    - not st.stat.exists
 
-- name: remove intances
+- name: Include config_file variables (optional)
+  ansible.builtin.include_vars: "{{ config_file }}"
+  when:
+    - config_file is defined
+    - config_file | length > 0
+    - st is defined
+    - st.stat.exists
+    - st.stat.isreg
+
+- name: Remove instances
   openstack.cloud.server:
     state: absent
-    name: "{{ hostvars[item].openstack.name }}"
-    terminate_volume: yes
-    validate_certs: "{{ openstack_validate_certs }}"
+    name: "{{ node.name }}"
+    terminate_volume: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   delegate_to: localhost
-  loop: "{{ ansible_play_hosts_all }}"
+  loop: "{{ nodes | default([]) }}"
+  loop_control:
+    loop_var: node
   when:
     - nodes is defined
-    - hostvars[item].openstack.name is defined
-    - (nodes | json_query(query)) | length > 0
-  vars:
-    query: "@[?name==`{{ hostvars[item].openstack.name }}`]"
+    - node.name is defined
+    - not (openstack_deprovision_best_effort | default(false) | bool)
+
+- name: Remove instances (best-effort)
+  openstack.cloud.server:
+    state: absent
+    name: "{{ node.name }}"
+    terminate_volume: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
+  delegate_to: localhost
+  loop: "{{ nodes | default([]) }}"
+  loop_control:
+    loop_var: node
+  failed_when: false
+  when:
+    - nodes is defined
+    - node.name is defined
+    - openstack_deprovision_best_effort | default(false) | bool

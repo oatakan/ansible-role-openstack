@@ -1,48 +1,114 @@
 ---
 
-- name: waiting for ip address to be assigned
+- name: Wait for IP address to be assigned (addresses contain at least one IPv4)
   openstack.cloud.server_info:
-    server: "{{ item.server.name }}"
+    server: "{{ node.name }}"
     filters:
       vm_state: active
-    validate_certs: false
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   register: server_info
   until:
     - server_info.servers is defined
-    - server_info.servers | length
-    - server_info.servers[0].access_ipv4 is defined
-    - server_info.servers[0].access_ipv4 | length
+    - server_info.servers | length > 0
+    - (server_info.servers[0].addresses | default({}) | length) > 0
+    - >-
+      (
+        (server_info.servers[0].addresses | default({}) | dict2items | map(attribute='value') | list | flatten)
+        | selectattr('version', 'equalto', 4)
+        | map(attribute='addr')
+        | list
+        | length
+      ) > 0
   retries: 300
   delay: 10
-  loop: "{{ instances.results }}"
+  loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
+  delegate_to: localhost
+  run_once: false
   when:
     - nodes is defined
-    - instances.results is defined
-    - item.server.name is defined
+    - node.name is defined
 
-- name: waiting for servers to come online
-  wait_for:
-    host: "{{ item.servers[0].access_ipv4 }}"
-    port: "{{ item.item.item.item.ansible_port | default(ansible_port) | default('22') }}"
+
+- name: Wait for servers to come online (TCP)
+  ansible.builtin.wait_for:
+    host: "{{ selected_server_ip }}"
+    port: "{{ selected_server_port | int }}"
     timeout: "{{ instance_wait_connection_timeout }}"
-  loop: "{{ server_info.results }}"
+  vars:
+    node: "{{ item.item }}"
+    server: "{{ item.servers[0] }}"
+    all_address_entries: "{{ server.addresses | default({}) | dict2items | map(attribute='value') | list | flatten }}"
+    floating_ipv4s: >-
+      {{
+        all_address_entries
+        | selectattr('version', 'equalto', 4)
+        | selectattr('OS-EXT-IPS:type', 'defined')
+        | selectattr('OS-EXT-IPS:type', 'equalto', 'floating')
+        | map(attribute='addr')
+        | list
+      }}
+    all_ipv4s: >-
+      {{
+        all_address_entries
+        | selectattr('version', 'equalto', 4)
+        | map(attribute='addr')
+        | list
+      }}
+    selected_server_ip: "{{ (floating_ipv4s | first) | default((all_ipv4s | first), true) | default('', true) }}"
+    default_port: "{{ 5986 if ((node.os_type | default('linux') | lower) == 'windows') else 22 }}"
+    selected_server_port: >-
+      {{
+        (node.ansible_port | default(default_port, true))
+      }}
+  loop: "{{ server_info.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name | default('node') }}"
   when:
     - server_info.results is defined
-    - item.servers[0].access_ipv4 is defined
-    - item.servers[0].access_ipv4 | length
+    - item.servers is defined
+    - item.servers | length > 0
+    - selected_server_ip | length > 0
 
-- name: waiting for windows systems to be available for connection
-  wait_for_connection:
+- name: Wait for Windows systems to be available for connection (strict)
+  ansible.builtin.wait_for_connection:
+    timeout: "{{ instance_wait_connection_timeout }}"
   vars:
+    node: "{{ item.item }}"
+    server: "{{ item.servers[0] }}"
+    all_address_entries: "{{ server.addresses | default({}) | dict2items | map(attribute='value') | list | flatten }}"
+    floating_ipv4s: >-
+      {{
+        all_address_entries
+        | selectattr('version', 'equalto', 4)
+        | selectattr('OS-EXT-IPS:type', 'defined')
+        | selectattr('OS-EXT-IPS:type', 'equalto', 'floating')
+        | map(attribute='addr')
+        | list
+      }}
+    all_ipv4s: >-
+      {{
+        all_address_entries
+        | selectattr('version', 'equalto', 4)
+        | map(attribute='addr')
+        | list
+      }}
+    selected_server_ip: "{{ (floating_ipv4s | first) | default((all_ipv4s | first), true) | default('', true) }}"
+    ansible_port: >-
+      {{
+        (node.ansible_port | default(5986, true))
+      }}
     ansible_connection: winrm
     ansible_winrm_transport: credssp
     ansible_winrm_server_cert_validation: ignore
-    _ansible_port: "{{ item.item.item.item.ansible_port | default(ansible_port) | default('22') }}"
-  delegate_to: "{{ item.servers[0].access_ipv4 }}"
-  loop: "{{ server_info.results }}"
-  ignore_errors: true
+  delegate_to: "{{ selected_server_ip }}"
+  loop: "{{ server_info.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name | default('node') }}"
   when:
     - server_info.results is defined
-    - item.servers[0].access_ipv4 is defined
-    - item.servers[0].access_ipv4 | length
-    - _ansible_port == 5986
+    - item.servers is defined
+    - item.servers | length > 0
+    - (node.os_type | default('linux') | lower) == 'windows'
+    - selected_server_ip | length > 0

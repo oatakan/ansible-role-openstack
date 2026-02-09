@@ -1,6 +1,6 @@
 ---
 
-- name: linux - launch a compute instance
+- name: Linux - launch a compute instance
   openstack.cloud.server:
     state: present
     name: "{{ node.name }}"
@@ -21,8 +21,8 @@
     auto_ip: "{{ _auto_ip }}"
     floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
     volumes: "{{ _server_volumes }}"
-    wait: yes
-    validate_certs: "{{ openstack_validate_certs }}"
+    wait: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   register: deploy_linux
   loop: "{{ nodes }}"
   loop_control:
@@ -31,7 +31,7 @@
     - nodes is defined
     - node.os_type is not defined or (node.os_type is defined and node.os_type | lower == 'linux')
 
-- name: windows - launch a compute instance
+- name: Windows - launch a compute instance
   openstack.cloud.server:
     state: present
     name: "{{ node.name }}"
@@ -52,8 +52,8 @@
     auto_ip: "{{ _auto_ip }}"
     floating_ips: "{{ _floating_ips if (_floating_ips | length) else omit }}"
     volumes: "{{ _server_volumes }}"
-    wait: yes
-    validate_certs: "{{ openstack_validate_certs }}"
+    wait: true
+    validate_certs: "{{ openstack_validate_certs | default(true) | bool }}"
   register: deploy_windows
   loop: "{{ nodes }}"
   loop_control:
@@ -63,15 +63,15 @@
     - node.os_type is defined
     - node.os_type | lower == 'windows'
 
-- name: combine deployment results
-  set_fact:
-    deploy_results: "{{ deploy_results|default([]) + [ item ] }}"
-  loop: "{{ deploy_linux.results + deploy_windows.results }}"
-  no_log: yes
+- name: Combine deployment results
+  ansible.builtin.set_fact:
+    deploy_results: "{{ deploy_results | default([]) + [item] }}"
+  loop: "{{ (deploy_linux.results | default([])) + (deploy_windows.results | default([])) }}"
+  no_log: true
   when:
     - nodes is defined
     - (item.skipped is not defined) or not item.skipped
 
-- name: set instances results
-  set_fact:
-    instances: "{{ {'results': deploy_results } }}"
+- name: Set instances results
+  ansible.builtin.set_fact:
+    instances: "{{ {'results': deploy_results} }}"

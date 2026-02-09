@@ -1,0 +1,42 @@
+---
+- name: Destroy
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    role_action: deprovision
+    openstack_validate_certs: false
+
+    private_network_name: "{{ lookup('env', 'OS_STACK_PRIVATE_NETWORK') | default('private_network', true) }}"
+
+    molecule_base_count: "{{ lookup('env', 'OS_STACK_BASE_COUNT') | default('1', true) | int }}"
+    molecule_base_image: "{{ lookup('env', 'OS_STACK_IMAGE') | default('cirros 0.6', true) }}"
+    molecule_base_flavor: "{{ lookup('env', 'OS_STACK_FLAVOR') | default('m1.small', true) }}"
+
+  pre_tasks:
+    - name: Initialize node list
+      ansible.builtin.set_fact:
+        nodes: []
+
+    - name: Add baseline nodes
+      ansible.builtin.set_fact:
+        nodes: >-
+          {{ nodes + [
+            {
+              'name': 'molecule-openstack' ~ item,
+              'app_name': 'molecule-openstack',
+              'role': 'molecule',
+              'environment': 'dev',
+              'os_type': 'linux',
+              'image': molecule_base_image,
+              'flavor': molecule_base_flavor,
+              'key_name': (lookup('env', 'OS_PROV_KEY_NAME')
+                | default(lookup('env', 'OS_STACK_KEYPAIR'), true)),
+              'nics': [ {'net-name': private_network_name} ],
+              'auto_ip': true
+            }
+          ] }}
+      loop: "{{ range(1, (molecule_base_count | int) + 1) | list }}"
+
+  roles:
+    - role: ansible-role-openstack

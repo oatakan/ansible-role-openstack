@@ -28,3 +28,5 @@ openstack_deprovision_best_effort: false
 set_network_to_private: >-
   ([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))).GetNetworkConnections() |
   % { $_.GetNetwork().SetCategory(1) }
+
+winrm_enable_script_url: https://raw.githubusercontent.com/ansible/ansible-documentation/devel/examples/scripts/ConfigureRemotingForAnsible.ps1

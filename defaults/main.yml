@@ -15,8 +15,9 @@ deploy_async: false
 
 wait_for_connection: true
 
-# Optional OpenStack config vars file (commonly used to set OS_CLIENT_CONFIG_FILE/OS_CLOUD). If set,
-# we validate it exists during preflight for early failure, mirroring ansible-role-os-stack.
+# Optional OpenStack config vars file (commonly used to set OS_CLIENT_CONFIG_FILE/OS_CLOUD).
+# If set, we validate it exists during preflight for early failure,
+# mirroring ansible-role-os-stack.
 config_file: "{{ lookup('env', 'OS_CLIENT_CONFIG_FILE') }}"
 
 # SSL verification for OpenStack API calls (default: enabled). Molecule scenarios can override.
@@ -26,7 +27,8 @@ openstack_validate_certs: true
 openstack_deprovision_best_effort: false
 
 set_network_to_private: >-
-  ([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))).GetNetworkConnections() |
-  % { $_.GetNetwork().SetCategory(1) }
+  ([Activator]::CreateInstance([Type]::GetTypeFromCLSID(
+  [Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))).GetNetworkConnections() | % {$_.GetNetwork().SetCategory(1)}
 
+# Reference Windows WinRM enablement script used by some workflows/tests.
 winrm_enable_script_url: https://raw.githubusercontent.com/ansible/ansible-documentation/devel/examples/scripts/ConfigureRemotingForAnsible.ps1

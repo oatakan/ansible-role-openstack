@@ -26,7 +26,7 @@ config_file: "{{ lookup('env', 'OS_CLIENT_CONFIG_FILE') }}"
 openstack_validate_certs: >-
   {{
     not (
-      (lookup('env', 'OS_INSECURE') | default('false', true) | string | lower)
+      (lookup('env', 'OS_INSECURE') | default('false', true) | string | trim | lower)
       in ['1', 'true', 'yes', 'y', 'on']
     )
   }}

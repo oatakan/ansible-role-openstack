@@ -21,7 +21,15 @@ wait_for_connection: true
 config_file: "{{ lookup('env', 'OS_CLIENT_CONFIG_FILE') }}"
 
 # SSL verification for OpenStack API calls (default: enabled). Molecule scenarios can override.
-openstack_validate_certs: true
+# If OS_INSECURE is set (1/true/yes/on), we disable cert validation to match
+# common OpenStack client behavior.
+openstack_validate_certs: >-
+  {{
+    not (
+      (lookup('env', 'OS_INSECURE') | default('false', true) | string | lower)
+      in ['1', 'true', 'yes', 'y', 'on']
+    )
+  }}
 
 # If true, attempt a best-effort cleanup (deprovision) when provision fails.
 openstack_deprovision_best_effort: false
